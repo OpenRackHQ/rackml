@@ -1,0 +1,586 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://rackml.org/schema/1"
+           xmlns:rml="http://rackml.org/schema/1"
+           elementFormDefault="qualified"
+           version="1.0.0">
+
+    <xs:annotation>
+        <xs:documentation xml:lang="en">
+            RackML Schema v1.0.0
+            Namespace: http://rackml.org/schema/1
+
+            RackML is an XML vocabulary for describing rack-mounted IT
+            infrastructure: racks, appliances, slots, components, ports,
+            and connections.
+
+            A conforming document has either a single &lt;rack&gt; root element
+            (full rack layout) or a single appliance root element
+            (standalone appliance library entry).
+
+            All linear measurements are in millimetres unless stated otherwise.
+            Angles are in degrees.
+
+            Copyright (c) 2024-2026 Logistic Support Alliance, LLC. All rights reserved.
+            Licensed under the Apache License, Version 2.0.
+        </xs:documentation>
+    </xs:annotation>
+
+    <!-- ================================================================== -->
+    <!-- Simple types                                                       -->
+    <!-- ================================================================== -->
+
+    <xs:simpleType name="measurement">
+        <xs:annotation>
+            <xs:documentation>
+                A numeric value with an optional unit suffix for linear
+                dimensions.  Bare numbers are interpreted as millimetres.
+
+                Supported suffixes:
+                  mm — millimetres (explicit, same as bare number)
+                  m  — metres (1 m = 1000 mm)
+                  u  — rack units (1 u = the rack's U value, default 44.45 mm)
+
+                Examples: "440", "440mm", "1u", "0.8m", "44.45mm"
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="-?[0-9]*\.?[0-9]+(mm|m|u)?" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="degrees">
+        <xs:annotation>
+            <xs:documentation>
+                Decimal value representing an angle in degrees.
+                No unit suffix; the value is always in degrees.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:decimal" />
+    </xs:simpleType>
+
+    <xs:simpleType name="faceType">
+        <xs:annotation>
+            <xs:documentation>
+                Physical face of an appliance or rack enclosure.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="front" />
+            <xs:enumeration value="rear" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="anchorType">
+        <xs:annotation>
+            <xs:documentation>
+                Mounting orientation of an appliance within the rack.
+                "front" means rails face the front of the rack;
+                "rear" means the appliance is flipped 180 degrees.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="front" />
+            <xs:enumeration value="rear" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="positionType">
+        <xs:annotation>
+            <xs:documentation>
+                Positioning mode for an appliance inside a rack.
+                "mounted" — snapped to a U-slot on the rail.
+                "absolute" — free-positioned via explicit x/y/z coordinates.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="mounted" />
+            <xs:enumeration value="absolute" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- ================================================================== -->
+    <!-- Base complex type shared by all RackML elements                    -->
+    <!-- ================================================================== -->
+
+    <xs:complexType name="objectType">
+        <xs:annotation>
+            <xs:documentation>
+                Abstract base type that carries the attributes common to every
+                RackML element: human-readable name, bounding-box size, local
+                position offset, SKU string, and weight.  Extended by every
+                concrete element type in the schema.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="id" type="xs:ID" use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    Document-unique identifier.  When present, other elements
+                    can reference this element via xs:IDREF attributes.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="name" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    Human-readable label for this object (e.g. "switch-01").
+                    Names are not required to be unique but SHOULD be within
+                    their parent scope to allow unambiguous path references.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <!-- Bounding-box size (mm) -->
+        <xs:attribute name="size_x" type="rml:measurement" use="optional">
+            <xs:annotation>
+                <xs:documentation>Width of the bounding box (X axis). Accepts unit suffixes.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="size_y" type="rml:measurement" use="optional">
+            <xs:annotation>
+                <xs:documentation>Height of the bounding box (Y axis). Accepts unit suffixes.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="size_z" type="rml:measurement" use="optional">
+            <xs:annotation>
+                <xs:documentation>Depth of the bounding box (Z axis). Accepts unit suffixes.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <!-- Position offset relative to parent origin (mm) -->
+        <xs:attribute name="x" type="rml:measurement" use="optional">
+            <xs:annotation>
+                <xs:documentation>X-axis offset from parent origin. Accepts unit suffixes.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="y" type="rml:measurement" use="optional">
+            <xs:annotation>
+                <xs:documentation>Y-axis offset from parent origin. Accepts unit suffixes.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="z" type="rml:measurement" use="optional">
+            <xs:annotation>
+                <xs:documentation>Z-axis offset from parent origin. Accepts unit suffixes.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="sku" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>Vendor stock-keeping unit or part number.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="weight" type="xs:decimal" use="optional">
+            <xs:annotation>
+                <xs:documentation>Weight in kilograms.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <!-- Dual-part body dimensions (mm). Used when an appliance has a
+             distinct bezel depth (Bd) and bezel width (Bw). -->
+        <xs:attribute name="Bd" type="rml:measurement" use="optional">
+            <xs:annotation>
+                <xs:documentation>Bezel depth (front faceplate thickness). Accepts unit suffixes.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="Bw" type="rml:measurement" use="optional">
+            <xs:annotation>
+                <xs:documentation>Bezel width. Accepts unit suffixes.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <!-- Extension point: attributes from other namespaces are allowed
+             so that tooling can attach vendor-specific metadata without
+             breaking conformance. -->
+        <xs:anyAttribute namespace="##other" processContents="lax" />
+    </xs:complexType>
+
+    <!-- ================================================================== -->
+    <!-- Root element: rack                                                 -->
+    <!-- ================================================================== -->
+
+    <xs:element name="rack">
+        <xs:annotation>
+            <xs:documentation>
+                Top-level element describing a single equipment rack.
+                Contains zero or more appliances, connections, and annotations.
+                When used as the document root, represents a complete rack
+                layout that can be rendered, analysed, or exchanged.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:complexContent>
+                <xs:extension base="rml:objectType">
+                    <xs:sequence>
+                        <xs:choice minOccurs="0" maxOccurs="unbounded">
+                            <xs:element ref="rml:appliance" />
+                            <xs:element ref="rml:connection" />
+                            <xs:element ref="rml:annotation" />
+                            <xs:any namespace="##other" processContents="lax"
+                                    minOccurs="0" maxOccurs="unbounded" />
+                        </xs:choice>
+                    </xs:sequence>
+                    <xs:attribute name="version" type="xs:string" use="optional">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Schema version that this document targets
+                                (e.g. "1.0.0").  Processors SHOULD check this
+                                value before parsing the remainder of the document.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="height" type="xs:positiveInteger">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Number of rack units (U) in this rack.
+                                Common values: 12, 24, 42, 48.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <!-- Rack specification measurements -->
+                    <xs:attribute name="A" type="rml:measurement" use="optional">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Horizontal distance between the inner edges of the
+                                front mounting posts (mm).
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="B" type="rml:measurement" use="optional">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Horizontal distance between the centres of the
+                                front mounting holes (mm).
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="C" type="rml:measurement" use="optional">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Horizontal distance between the outer edges of the
+                                front mounting posts (mm).
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="D" type="rml:measurement" use="optional">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Overall depth of the rack enclosure (mm).
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="U" type="rml:measurement" use="optional">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Physical height of one rack unit in millimetres.
+                                The EIA-310-E standard defines 1U = 44.45 mm.
+                                Omit to use the standard value.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- ================================================================== -->
+    <!-- Appliance element (also valid as standalone document root)          -->
+    <!-- ================================================================== -->
+
+    <xs:element name="appliance">
+        <xs:annotation>
+            <xs:documentation>
+                A piece of equipment installed in a rack: server, switch,
+                UPS, patch panel, blank, etc.  May also appear as the
+                document root for appliance library entries.
+
+                When used as a standalone root, the element describes a
+                single appliance template that can be imported into a rack.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:complexContent>
+                <xs:extension base="rml:objectType">
+                    <xs:sequence>
+                        <xs:choice minOccurs="0" maxOccurs="unbounded">
+                            <xs:element ref="rml:slot" />
+                            <xs:element ref="rml:port" />
+                            <xs:element ref="rml:annotation" />
+                            <xs:any namespace="##other" processContents="lax"
+                                    minOccurs="0" maxOccurs="unbounded" />
+                        </xs:choice>
+                    </xs:sequence>
+                    <xs:attribute name="version" type="xs:string" use="optional">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Schema version (used when appliance is the
+                                document root for a library entry).
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="anchor" type="rml:anchorType" use="optional" default="front">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Which rack face the appliance is mounted against.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="position" type="rml:positionType" use="optional" default="mounted">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Positioning mode: "mounted" snaps to a U-slot;
+                                "absolute" uses explicit x/y/z coordinates.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="type" type="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Appliance category (e.g. "server", "switch",
+                                "ups", "patch-panel", "pdu", "blank").
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <!-- Euler rotation (degrees) around local axes -->
+                    <xs:attribute name="rot_x" type="rml:degrees" use="optional" default="0">
+                        <xs:annotation>
+                            <xs:documentation>Rotation around local X axis in degrees.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="rot_y" type="rml:degrees" use="optional" default="0">
+                        <xs:annotation>
+                            <xs:documentation>Rotation around local Y axis in degrees.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="rot_z" type="rml:degrees" use="optional" default="0">
+                        <xs:annotation>
+                            <xs:documentation>Rotation around local Z axis in degrees.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- ================================================================== -->
+    <!-- Slot element                                                       -->
+    <!-- ================================================================== -->
+
+    <xs:element name="slot">
+        <xs:annotation>
+            <xs:documentation>
+                A receptacle inside an appliance that can accept a single
+                component (e.g. a drive bay, expansion slot, or PSU bay).
+                The "accepts" attribute names the component type this slot
+                is designed for, enabling drag-and-drop compatibility checks.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:complexContent>
+                <xs:extension base="rml:objectType">
+                    <xs:sequence>
+                        <xs:element ref="rml:component" minOccurs="0" maxOccurs="1" />
+                    </xs:sequence>
+                    <xs:attribute name="accepts" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Component type this slot accepts (e.g. "psu",
+                                "hdd", "pcie", "fan").
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="face" type="rml:faceType" use="required">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Which appliance face this slot is visible from.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="rotation" type="rml:degrees" use="optional" default="0">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Rotation of the slot (and its child component)
+                                around the Z axis in degrees.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- ================================================================== -->
+    <!-- Component element (child of slot)                                  -->
+    <!-- ================================================================== -->
+
+    <xs:element name="component">
+        <xs:annotation>
+            <xs:documentation>
+                A removable part installed inside a slot: a power supply
+                module, hard drive, expansion card, fan tray, etc.
+                Components may expose their own ports (e.g. a NIC in a
+                PCIe slot exposes network ports).
+            </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:complexContent>
+                <xs:extension base="rml:objectType">
+                    <xs:sequence>
+                        <xs:choice minOccurs="0" maxOccurs="unbounded">
+                            <xs:element ref="rml:port" />
+                            <xs:any namespace="##other" processContents="lax"
+                                    minOccurs="0" maxOccurs="unbounded" />
+                        </xs:choice>
+                    </xs:sequence>
+                    <xs:attribute name="type" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Component category (e.g. "psu", "hdd", "ssd",
+                                "pcie-card", "fan").
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- ================================================================== -->
+    <!-- Port element                                                       -->
+    <!-- ================================================================== -->
+
+    <xs:element name="port">
+        <xs:annotation>
+            <xs:documentation>
+                A physical connector on an appliance or component face.
+                Ports are the endpoints referenced by connection elements.
+
+                Common port types include:
+                  Network — rj45, rj45_f, sfp, sfp+, qsfp, fiber, ethernet
+                  Power   — c13, c14, c20, power, pdu
+                  Console — console, serial, management
+                  Video   — hdmi, displayport, vga, dvi
+                  Other   — usb, audio, coax, bnc
+
+                Implementations SHOULD accept additional type values to
+                support new connector standards without a schema revision.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:complexContent>
+                <xs:extension base="rml:objectType">
+                    <xs:attribute name="type" type="xs:string" use="required">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Connector type identifier (see element-level
+                                documentation for the list of well-known values).
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="face" type="rml:faceType" use="optional">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Appliance face this port is mounted on.
+                                When omitted, inherited from the parent slot's face.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="rotation" type="rml:degrees" use="optional" default="0">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Rotation around the Z axis perpendicular to the
+                                mounting face, in degrees.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- ================================================================== -->
+    <!-- Connection element                                                 -->
+    <!-- ================================================================== -->
+
+    <xs:element name="connection">
+        <xs:annotation>
+            <xs:documentation>
+                A logical or physical cable connection between two ports.
+                "from" and "to" use slash-delimited path notation to address
+                ports (e.g. "server-01/eth1" or "switch-01/port24").
+            </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:complexContent>
+                <xs:extension base="rml:objectType">
+
+                    <xs:attribute name="from" type="xs:string" use="optional">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Source port path (e.g. "server-01/eth1").
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="to" type="xs:string" use="optional">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Destination port path (e.g. "switch-01/port24").
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="cable-type" type="xs:string" use="optional">
+                        <xs:annotation>
+                            <xs:documentation>
+                                Cable or medium type (e.g. "Cat6", "OM4",
+                                "Direct", "DAC").  Free-form string to
+                                accommodate the wide range of cable standards.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- ================================================================== -->
+    <!-- Annotation element                                                 -->
+    <!-- ================================================================== -->
+
+    <xs:element name="annotation">
+        <xs:annotation>
+            <xs:documentation>
+                A text annotation attached to an enclosing rack element
+                (rack or appliance).  Annotations are stored in the project
+                and displayed in the properties panel when the parent object
+                is selected.  Unlike xs:annotation, this element carries
+                user-authored notes rather than schema documentation.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:attribute name="id" type="xs:ID" use="optional">
+                <xs:annotation>
+                    <xs:documentation>
+                        Optional document-unique identifier for this annotation.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="text" type="xs:string" use="required">
+                <xs:annotation>
+                    <xs:documentation>
+                        The annotation body text.  Plain text; no markup.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="author" type="xs:string" use="optional">
+                <xs:annotation>
+                    <xs:documentation>
+                        Name or identifier of the person who wrote the annotation.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="date" type="xs:string" use="optional">
+                <xs:annotation>
+                    <xs:documentation>
+                        ISO 8601 timestamp when the annotation was created
+                        (e.g. "2026-03-15T14:30:00Z").  Set by the client at
+                        creation time.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>
