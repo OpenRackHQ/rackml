@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           targetNamespace="http://rackml.org/schema/1"
-           xmlns:rml="http://rackml.org/schema/1"
+           targetNamespace="http://rackml.org/schema/1-0-0"
+           xmlns:rml="http://rackml.org/schema/1-0-0"
            elementFormDefault="qualified"
            version="1.0.0">
 
     <xs:annotation>
         <xs:documentation xml:lang="en">
             RackML Schema v1.0.0
-            Namespace: http://rackml.org/schema/1
+            Namespace: http://rackml.org/schema/1-0-0
 
             RackML is an XML vocabulary for describing rack-mounted IT
             infrastructure: racks, appliances, slots, components, ports,
