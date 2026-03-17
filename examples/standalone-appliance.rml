@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<appliance xmlns="http://rackml.org/schema/1-0-0"
+           name="1u-dual-psu-server" version="1.0.0" type="server"
+           size_x="440mm" size_y="1u" size_z="800mm">
+
+  <port name="ethernet-1" type="rj45" x="300mm" y="0" face="front" />
+  <port name="ethernet-2" type="rj45" x="330mm" y="0" face="front" />
+  <port name="mgmt" type="rj45" x="380mm" y="0" face="rear" />
+
+  <slot name="psu-1" accepts="psu" face="rear"
+        x="10mm" y="10mm" size_x="100mm" size_y="40mm">
+    <component type="psu" name="750w-supply">
+      <port name="power-in" type="c14" x="10mm" y="10mm" />
+    </component>
+  </slot>
+
+  <slot name="psu-2" accepts="psu" face="rear"
+        x="120mm" y="10mm" size_x="100mm" size_y="40mm">
+    <component type="psu" name="750w-supply-redundant">
+      <port name="power-in" type="c14" x="10mm" y="10mm" />
+    </component>
+  </slot>
+
+  <slot name="pcie-1" accepts="pcie" face="rear"
+        x="250mm" y="10mm" size_x="150mm" size_y="30mm" />
+
+  <annotation text="Generic 1U server template with dual redundant PSUs and one PCIe expansion slot" />
+
+</appliance>

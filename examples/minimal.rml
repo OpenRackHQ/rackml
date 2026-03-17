@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rack xmlns="http://rackml.org/schema/1-0-0"
+      name="my-rack" height="42">
+    <appliance name="server1" y="1u" type="server" />
+</rack>

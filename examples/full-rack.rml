@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rack xmlns="http://rackml.org/schema/1-0-0"
+      name="datacenter-rack-01" height="42"
+      A="450mm" B="465mm" C="483.4mm" D="1m" U="44.45mm">
+
+  <appliance name="core-switch" y="1u" type="switch"
+             size_x="440mm" size_y="1u" size_z="801mm"
+             sku="Cisco-C9300-48T" Bd="25mm" Bw="480mm">
+    <port name="power-in-1" type="c14" x="50mm" y="0" face="rear" />
+    <port name="power-in-2" type="c14" x="100mm" y="0" face="rear" />
+    <port name="ethernet-1" type="rj45" x="50mm" y="0" face="front" />
+    <port name="ethernet-2" type="rj45" x="80mm" y="0" face="front" />
+    <port name="ethernet-3" type="rj45" x="110mm" y="0" face="front" />
+    <port name="ethernet-4" type="rj45" x="140mm" y="0" face="front" />
+    <port name="uplink-1" type="sfp+" x="300mm" y="0" face="front" />
+    <port name="mgmt-port" type="rj45" x="380mm" y="0" face="front" />
+  </appliance>
+
+  <appliance name="access-switch" y="3u" type="switch"
+             size_x="440mm" size_y="1u" size_z="800mm"
+             sku="Cisco-C9300-24T">
+    <port name="power-in-1" type="c14" x="50mm" y="0" face="rear" />
+    <port name="power-in-2" type="c14" x="100mm" y="0" face="rear" />
+    <port name="ethernet-1" type="rj45" x="50mm" y="0" face="front" />
+    <port name="ethernet-2" type="rj45" x="80mm" y="0" face="front" />
+    <port name="uplink-1" type="sfp+" x="300mm" y="0" face="front" />
+    <port name="mgmt-port" type="rj45" x="380mm" y="0" face="front" />
+  </appliance>
+
+  <appliance name="web-server-01" y="5u" type="server"
+             size_x="440mm" size_y="1u" size_z="800mm"
+             sku="Dell-R650" Bd="20mm" Bw="480mm">
+    <port name="power-in-1" type="c14" x="50mm" y="0" face="rear" />
+    <port name="power-in-2" type="c14" x="100mm" y="0" face="rear" />
+    <port name="ilo-port" type="rj45" x="350mm" y="0" face="rear" />
+    <port name="ethernet-1" type="rj45" x="300mm" y="0" face="front" />
+  </appliance>
+
+  <appliance name="web-server-02" y="6u" type="server"
+             size_x="440mm" size_y="1u" size_z="800mm"
+             sku="Dell-R650">
+    <port name="power-in-1" type="c14" x="50mm" y="0" face="rear" />
+    <port name="power-in-2" type="c14" x="100mm" y="0" face="rear" />
+    <port name="ilo-port" type="rj45" x="350mm" y="0" face="rear" />
+    <port name="ethernet-1" type="rj45" x="300mm" y="0" face="front" />
+  </appliance>
+
+  <appliance name="storage-array" y="8u" type="server"
+             size_x="440mm" size_y="2u" size_z="600mm"
+             sku="NetApp-FAS2750">
+    <port name="power-in-1" type="c14" x="50mm" y="0" face="rear" />
+    <port name="power-in-2" type="c14" x="100mm" y="0" face="rear" />
+    <port name="mgmt-port" type="rj45" x="300mm" y="0" face="rear" />
+    <port name="data-port-1" type="sfp+" x="350mm" y="0" face="rear" />
+    <port name="data-port-2" type="sfp+" x="380mm" y="0" face="rear" />
+  </appliance>
+
+  <appliance name="pdu-01" y="41u" type="pdu"
+             size_x="40mm" size_y="1u" size_z="600mm"
+             sku="APC-PDU" anchor="rear">
+    <port name="inlet" type="c20" x="20mm" y="0" face="rear" />
+    <port name="outlet-1" type="c13" x="50mm" y="0" face="front" />
+    <port name="outlet-2" type="c13" x="100mm" y="0" face="front" />
+    <port name="outlet-3" type="c13" x="150mm" y="0" face="front" />
+    <port name="outlet-4" type="c13" x="200mm" y="0" face="front" />
+    <port name="outlet-5" type="c13" x="250mm" y="0" face="front" />
+    <port name="outlet-6" type="c13" x="300mm" y="0" face="front" />
+  </appliance>
+
+  <!-- Network connections -->
+  <connection name="uplink" from="core-switch/uplink-1" to="access-switch/uplink-1" />
+  <connection name="server-1-net" from="access-switch/ethernet-1" to="web-server-01/ethernet-1" />
+  <connection name="server-2-net" from="access-switch/ethernet-2" to="web-server-02/ethernet-1" />
+  <connection name="storage-net" from="core-switch/ethernet-1" to="storage-array/data-port-1" />
+
+  <!-- Power connections -->
+  <connection name="power-switch-1" from="pdu-01/outlet-1" to="core-switch/power-in-1" />
+  <connection name="power-switch-2" from="pdu-01/outlet-2" to="access-switch/power-in-1" />
+  <connection name="power-server-1" from="pdu-01/outlet-3" to="web-server-01/power-in-1" />
+  <connection name="power-server-2" from="pdu-01/outlet-4" to="web-server-02/power-in-1" />
+  <connection name="power-storage" from="pdu-01/outlet-5" to="storage-array/power-in-1" />
+
+  <annotation text="Production rack — web tier with redundant switches and shared storage" />
+
+</rack>
